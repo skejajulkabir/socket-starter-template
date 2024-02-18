@@ -3,7 +3,21 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const http = require("http");
 
+const PORT = 3000;
+
+
 const app = express();
+
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["*"], 
+    credentials: true,
+},
+});
 
 app.use(
   cors({
@@ -13,18 +27,6 @@ app.use(
   })
 );
 
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["*"], 
-    credentials: true,
-  },
-});
-
-const PORT = 3000;
-
 app.get("/", (req, res) => {
   res.send("<h1>Hello world</h1>");
 });
@@ -32,12 +34,29 @@ app.get("/", (req, res) => {
 io.on("connect", (socket) => {
   console.log("a user connected and the id is, ", socket.id);
 
+//   socket.emit("welcome", "welcome to server.")
+//   socket.broadcast.emit("welcome", `${socket.id} joined the server...`);
 
-  socket.on("message", (data) => { // Listen for "message" event on individual sockets
+  socket.on("message", (data) => {
     console.log(data);
-    io.emit("receive-message", data); // Emit to all connected sockets
+    // socket.broadcast.emit("receive-message", {status : "message paisi!" , data});
+    socket.broadcast.to(data.room).emit("receive-message", {status : "message paisi!" , data : data.message });
   });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+
+//   socket.on("join-room", (roomName)=>{
+//     socket.join(roomName);
+//     console.log(`user joined room ${roomName}`);
+//   })
+
+// console.log(socket)
+
 });
+
+
 
 
 
